@@ -138,13 +138,13 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
           <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 8, padding: 4 }}>
             <button
               onClick={() => setPlayerMode('drive')}
-              style={{ ...toggleBtn, background: playerMode === 'drive' ? 'rgba(255,255,255,0.2)' : 'transparent', color: playerMode === 'drive' ? '#fff' : 'rgba(255,255,255,0.4)' }}
+              style={{ ...toggleBtn, background: 'rgba(255,255,255,0.2)', color: '#fff' }}
             >
               Drive Player
             </button>
             <button
               onClick={() => setPlayerMode('browser')}
-              style={{ ...toggleBtn, background: playerMode === 'browser' ? 'rgba(255,255,255,0.2)' : 'transparent', color: playerMode === 'browser' ? '#fff' : 'rgba(255,255,255,0.4)' }}
+              style={{ ...toggleBtn, background: 'transparent', color: 'rgba(255,255,255,0.4)' }}
             >
               Browser Player
             </button>
