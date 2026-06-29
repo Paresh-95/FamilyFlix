@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Search, X, LogOut, ShieldOff } from 'lucide-react';
+import { Search, X, LogOut, ShieldOff, RefreshCw } from 'lucide-react';
 import AdminPinModal from './AdminPinModal';
 
 export default function Navbar() {
@@ -56,6 +56,15 @@ export default function Navbar() {
     if (pathname.startsWith('/admin')) return;
     e.preventDefault();
     setAdminModal(true);
+  }
+
+  function handleSyncClick() {
+    if (pathname.startsWith('/admin')) {
+      router.push('/admin/sync');
+    } else {
+      setAdminRedirectTo('/admin/sync');
+      setAdminModal(true);
+    }
   }
 
   return (
@@ -126,6 +135,17 @@ export default function Navbar() {
             </button>
           )}
         </div>
+
+        {/* Sync Drive (not on admin pages — admin already has a dedicated sync page) */}
+        {!pathname.startsWith('/admin') && (
+          <button
+            onClick={handleSyncClick}
+            title="Sync Drive"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-white/40 hover:text-violet-400 hover:bg-violet-500/8 transition-colors"
+          >
+            <RefreshCw size={16} />
+          </button>
+        )}
 
         {/* Lock admin (only on admin pages) */}
         {pathname.startsWith('/admin') && (

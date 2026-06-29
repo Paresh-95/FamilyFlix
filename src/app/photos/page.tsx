@@ -2,25 +2,32 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { FolderOpen, Images, ChevronRight, X, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { FolderOpen, Images, ChevronRight, X, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, RefreshCw } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import type { DriveItem } from '@/app/api/photos/route';
 
 type Album = { id: string; name: string; drive_folder_id: string };
 type Crumb = { id: string; name: string };
+type PhotosResponse = { items: DriveItem[]; nextPageToken: string | null };
+
+const PAGE_SIZE = 60;
 
 export default function PhotosPage() {
-  const [albums, setAlbums]                   = useState<Album[]>([]);
-  const [albumsLoading, setAlbumsLoading]     = useState(true);
-  const [activeAlbum, setActiveAlbum]         = useState<Album | null>(null);
-  const [breadcrumbs, setBreadcrumbs]         = useState<Crumb[]>([]);
-  const [items, setItems]                     = useState<DriveItem[]>([]);
-  const [itemsLoading, setItemsLoading]       = useState(false);
-  const [error, setError]                     = useState('');
-  const [lightbox, setLightbox]               = useState<number | null>(null);
+  const [albums, setAlbums]               = useState<Album[]>([]);
+  const [albumsLoading, setAlbumsLoading] = useState(true);
+  const [activeAlbum, setActiveAlbum]     = useState<Album | null>(null);
+  const [breadcrumbs, setBreadcrumbs]     = useState<Crumb[]>([]);
+  const [items, setItems]                 = useState<DriveItem[]>([]);
+  const [itemsLoading, setItemsLoading]   = useState(false);
+  const [loadingMore, setLoadingMore]     = useState(false);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [error, setError]                 = useState('');
+  const [lightbox, setLightbox]           = useState<number | null>(null);
 
-  const photos = items.filter((i) => !i.isFolder);
+  const photos  = items.filter((i) => !i.isFolder);
   const folders = items.filter((i) => i.isFolder);
+
+  const currentFolderId = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].id : null;
 
   useEffect(() => {
     fetch('/api/albums')
@@ -32,15 +39,36 @@ export default function PhotosPage() {
 
   const loadFolder = useCallback((folderId: string) => {
     setItems([]);
+    setNextPageToken(null);
     setError('');
     setItemsLoading(true);
     setLightbox(null);
-    fetch(`/api/photos?folderId=${folderId}`)
+    const params = new URLSearchParams({ folderId, pageSize: String(PAGE_SIZE) });
+    fetch(`/api/photos?${params}`)
       .then((r) => r.json())
-      .then((d) => { if (d.error) setError(d.error); else setItems(d); })
+      .then((d: PhotosResponse | { error: string }) => {
+        if ('error' in d) { setError(d.error); return; }
+        setItems(d.items);
+        setNextPageToken(d.nextPageToken);
+      })
       .catch(() => setError('Failed to load photos.'))
       .finally(() => setItemsLoading(false));
   }, []);
+
+  const loadMore = useCallback(() => {
+    if (!currentFolderId || !nextPageToken || loadingMore) return;
+    setLoadingMore(true);
+    const params = new URLSearchParams({ folderId: currentFolderId, pageToken: nextPageToken, pageSize: String(PAGE_SIZE) });
+    fetch(`/api/photos?${params}`)
+      .then((r) => r.json())
+      .then((d: PhotosResponse | { error: string }) => {
+        if ('error' in d) return;
+        setItems((prev) => [...prev, ...d.items]);
+        setNextPageToken(d.nextPageToken);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  }, [currentFolderId, nextPageToken, loadingMore]);
 
   function openAlbum(album: Album) {
     setActiveAlbum(album);
@@ -63,6 +91,7 @@ export default function PhotosPage() {
     setActiveAlbum(null);
     setBreadcrumbs([]);
     setItems([]);
+    setNextPageToken(null);
     setError('');
     setLightbox(null);
   }
@@ -122,7 +151,7 @@ export default function PhotosPage() {
               {activeAlbum && !itemsLoading && (
                 <p className="text-white/30 text-sm mt-0.5">
                   {folders.length > 0 && `${folders.length} folder${folders.length !== 1 ? 's' : ''} · `}
-                  {photos.length} photo{photos.length !== 1 ? 's' : ''}
+                  {photos.length}{nextPageToken ? '+' : ''} photo{photos.length !== 1 ? 's' : ''}
                 </p>
               )}
             </div>
@@ -232,6 +261,33 @@ export default function PhotosPage() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Load more */}
+                    {nextPageToken && (
+                      <div className="flex justify-center mt-8">
+                        <button
+                          onClick={loadMore}
+                          disabled={loadingMore}
+                          className="flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white/70 hover:text-white text-sm font-medium px-6 py-3 rounded-xl transition-all"
+                        >
+                          {loadingMore ? (
+                            <>
+                              <span className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                              Loading…
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw size={14} />
+                              Load more photos
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+
+                    {!nextPageToken && photos.length >= PAGE_SIZE && (
+                      <p className="text-center text-white/20 text-xs mt-6">{photos.length} photos</p>
+                    )}
                   </div>
                 )}
               </div>

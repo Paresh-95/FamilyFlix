@@ -32,6 +32,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'folderId is required' }, { status: 400 });
   }
   const folderId = extractFolderId(raw);
+  const pageToken = req.nextUrl.searchParams.get('pageToken') ?? undefined;
+  const pageSize  = Math.min(parseInt(req.nextUrl.searchParams.get('pageSize') ?? '60'), 200);
 
   try {
     const auth = new google.auth.GoogleAuth({
@@ -43,8 +45,9 @@ export async function GET(req: NextRequest) {
 
     const res = await drive.files.list({
       q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType = 'application/vnd.google-apps.folder') and trashed = false`,
-      fields: 'files(id, name, mimeType, thumbnailLink, imageMediaMetadata)',
-      pageSize: 500,
+      fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, imageMediaMetadata)',
+      pageSize,
+      pageToken,
       orderBy: 'folder,name',
     });
 
@@ -58,7 +61,10 @@ export async function GET(req: NextRequest) {
       height: (f.imageMediaMetadata as { height?: number } | null)?.height,
     }));
 
-    return NextResponse.json(items);
+    return NextResponse.json({
+      items,
+      nextPageToken: res.data.nextPageToken ?? null,
+    });
   } catch (err) {
     console.error('Photos list error:', err);
     return NextResponse.json({ error: 'Failed to list photos' }, { status: 500 });
