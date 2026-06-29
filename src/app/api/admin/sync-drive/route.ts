@@ -6,15 +6,26 @@ export const dynamic = 'force-dynamic';
 
 function cleanFilename(filename: string): string {
   let name = filename.replace(/\.[^/.]+$/, ''); // strip extension
-  name = name.replace(/^Copy of /i, '');         // strip "Copy of " prefix
-  // Extract title before year e.g. "Movie Name (2008)" or "Movie Name [2008]"
-  const yearMatch = name.match(/^(.+?)\s*[\(\[]\s*(\d{4})/);
-  if (yearMatch) return yearMatch[1].trim();
-  // Strip quality tags and everything after
+  name = name.replace(/^Copy of /i, '');
+
+  // Dot-separated filenames (e.g. Raja.Shivaji.2026.1080p...) — replace dots with spaces
+  const dots   = (name.match(/\./g) ?? []).length;
+  const spaces = (name.match(/ /g) ?? []).length;
+  if (dots > spaces) name = name.replace(/\./g, ' ');
+
+  // Title before bracketed year: "Movie Name (2008)" or "Movie Name [2008]"
+  const bracketYear = name.match(/^(.+?)\s*[\(\[]\s*(\d{4})/);
+  if (bracketYear) return bracketYear[1].trim();
+
+  // Strip bare year (1900–2099) and everything after it
+  name = name.replace(/\b(19|20)\d{2}\b.*$/, '');
+
+  // Fallback: strip quality tags and everything after
   name = name.replace(
-    /\b(2160p|1080p|720p|480p|4K|UHD|BluRay|BRRip|WEB[-.]?DL|WEBRip|HDRip|DVDRip|x264|x265|HEVC|AVC|AAC|DD|DTS|ESub|ESubs|Hindi|English|Tamil|Telugu|Dual|Multi|Audio|Unrated|Extended|Directors\.Cut|Remastered|PROPER|REPACK|NF|AMZN|DSNP)\b.*/i,
+    /\b(2160p|1080p|720p|480p|4K|UHD|BluRay|BRRip|WEB[-. ]?DL|WEBRip|HDRip|DVDRip|x264|x265|HEVC|AVC|AAC|DD|DTS|ESub|ESubs|Hindi|English|Tamil|Telugu|Dual|Multi|Audio|Unrated|Extended|Directors\.Cut|Remastered|PROPER|REPACK|NF|AMZN|DSNP)\b.*/i,
     ''
   );
+
   return name.trim();
 }
 
