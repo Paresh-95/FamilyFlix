@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const PUBLIC_PATHS  = ['/login', '/api/auth', '/api/stream'];
-const ADMIN_PUBLIC  = ['/admin/login', '/api/admin-auth'];
+const ADMIN_PUBLIC  = ['/api/admin-auth'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -24,7 +24,8 @@ export function middleware(req: NextRequest) {
     const adminSession = req.cookies.get('familyflix_admin');
     if (adminSession?.value !== 'authenticated') {
       const url = req.nextUrl.clone();
-      url.pathname = '/admin/login';
+      url.pathname = '/';
+      url.searchParams.set('adminAuth', '1');
       url.searchParams.set('from', pathname);
       return NextResponse.redirect(url);
     }

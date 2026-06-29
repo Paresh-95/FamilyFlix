@@ -6,23 +6,12 @@ import Link from 'next/link';
 import { RefreshCw, Clapperboard, Images, ArrowRight } from 'lucide-react';
 import { Movie } from '@/lib/supabase';
 import { TMDB_IMAGE_BASE } from '@/lib/tmdb';
+import { extractDriveId } from '@/lib/drive-utils';
 import Navbar from '@/components/Navbar';
+import Alert from '@/components/Alert';
 
 type TmdbResult = { id: number; title: string; year?: string; poster_path?: string };
 
-function extractDriveId(input: string): string {
-  const patterns = [
-    /\/folders\/([a-zA-Z0-9_-]{10,})/,
-    /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
-    /[?&]id=([a-zA-Z0-9_-]{10,})/,
-    /\/open\?id=([a-zA-Z0-9_-]{10,})/,
-  ];
-  for (const re of patterns) {
-    const m = input.match(re);
-    if (m) return m[1];
-  }
-  return input.trim();
-}
 
 export default function AdminPage() {
   const [movies,      setMovies]      = useState<Movie[]>([]);
@@ -93,7 +82,7 @@ export default function AdminPage() {
 
   const cards = [
     { href: '/admin/sync',   icon: RefreshCw,   label: 'Sync Drive',   desc: 'Auto-detect & add new movies', gradient: 'from-violet-600/20 to-violet-900/5', border: 'border-violet-500/20', iconBg: 'bg-violet-500/15', iconColor: 'text-violet-400' },
-    { href: '/admin/movies', icon: Clapperboard, label: 'Movies Table', desc: `${movies.length} movies in library`,  gradient: 'from-blue-600/20 to-blue-900/5',   border: 'border-blue-500/20',   iconBg: 'bg-blue-500/15',   iconColor: 'text-blue-400'   },
+    { href: '/admin/movies', icon: Clapperboard, label: 'Manage Movies', desc: `${movies.length} movies in library`,  gradient: 'from-blue-600/20 to-blue-900/5',   border: 'border-blue-500/20',   iconBg: 'bg-blue-500/15',   iconColor: 'text-blue-400'   },
     { href: '/admin/albums', icon: Images,       label: 'Photo Albums', desc: 'Manage Drive photo folders',  gradient: 'from-amber-600/20 to-amber-900/5', border: 'border-amber-500/20', iconBg: 'bg-amber-500/15', iconColor: 'text-amber-400' },
   ];
 
@@ -267,12 +256,3 @@ export default function AdminPage() {
   );
 }
 
-function Alert({ type, children }: { type: 'error' | 'success'; children: React.ReactNode }) {
-  return (
-    <div className={`flex items-center gap-2 border px-4 py-3 rounded-xl text-sm font-medium ${
-      type === 'error' ? 'bg-netflix-red/8 border-netflix-red/25 text-red-400' : 'bg-emerald-500/8 border-emerald-500/25 text-emerald-400'
-    }`}>
-      {type === 'error' ? '⚠' : '✓'} {children}
-    </div>
-  );
-}

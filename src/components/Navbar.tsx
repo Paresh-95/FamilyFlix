@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Search, X, LogOut, ShieldOff } from 'lucide-react';
 import AdminPinModal from './AdminPinModal';
 
 export default function Navbar() {
-  const [query,       setQuery]       = useState('');
-  const [searchOpen,  setSearchOpen]  = useState(false);
-  const [scrolled,    setScrolled]    = useState(false);
-  const [adminModal,  setAdminModal]  = useState(false);
+  const [query,            setQuery]            = useState('');
+  const [searchOpen,       setSearchOpen]       = useState(false);
+  const [scrolled,         setScrolled]         = useState(false);
+  const [adminModal,       setAdminModal]       = useState(false);
+  const [adminRedirectTo,  setAdminRedirectTo]  = useState('/admin');
   const router   = useRouter();
   const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +67,7 @@ export default function Navbar() {
             ? 'rgba(10,10,10,0.97)'
             : 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%)',
           backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : '1px solid transparent',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : 'none',
         }}
       >
         {/* Logo */}
@@ -147,9 +148,30 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {adminModal && <AdminPinModal onClose={() => setAdminModal(false)} />}
+      <Suspense fallback={null}>
+        <AdminAuthWatcher onTrigger={(from) => { setAdminRedirectTo(from); setAdminModal(true); }} />
+      </Suspense>
+      {adminModal && <AdminPinModal onClose={() => setAdminModal(false)} redirectTo={adminRedirectTo} />}
     </>
   );
+}
+
+function AdminAuthWatcher({ onTrigger }: { onTrigger: (from: string) => void }) {
+  const searchParams = useSearchParams();
+  const router       = useRouter();
+
+  useEffect(() => {
+    if (searchParams.get('adminAuth') !== '1') return;
+    const from = searchParams.get('from') || '/admin';
+    onTrigger(from);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('adminAuth');
+    url.searchParams.delete('from');
+    router.replace(url.pathname + url.search);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return null;
 }
 
 function NavLink({ href, children, active }: { href: string; children: React.ReactNode; active: boolean }) {

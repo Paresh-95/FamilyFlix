@@ -162,7 +162,7 @@ function MovieCard({ movie, onDelete, deleting }: { movie: Movie; onDelete: (id:
       {/* Hover action overlay */}
       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2 p-3">
         <Link
-          href={`/watch/${movie.id}`}
+          href={`/movie/${movie.id}`}
           className="w-full flex items-center justify-center gap-2 bg-white text-black text-xs font-bold py-2.5 rounded-lg hover:bg-white/90 transition-colors"
         >
           <Play size={13} className="fill-black" />

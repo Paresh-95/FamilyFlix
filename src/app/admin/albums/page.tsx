@@ -3,23 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Images, FolderOpen, Trash2, ArrowUpRight, ChevronLeft, Plus } from 'lucide-react';
+import { extractDriveId } from '@/lib/drive-utils';
 import Navbar from '@/components/Navbar';
+import Alert from '@/components/Alert';
 
 type Album = { id: string; name: string; drive_folder_id: string; created_at: string };
-
-function extractDriveId(input: string): string {
-  const patterns = [
-    /\/folders\/([a-zA-Z0-9_-]{10,})/,
-    /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
-    /[?&]id=([a-zA-Z0-9_-]{10,})/,
-    /\/open\?id=([a-zA-Z0-9_-]{10,})/,
-  ];
-  for (const re of patterns) {
-    const m = input.match(re);
-    if (m) return m[1];
-  }
-  return input.trim();
-}
 
 const inputStyle = {
   width: '100%',
@@ -209,12 +197,3 @@ export default function AlbumsAdminPage() {
   );
 }
 
-function Alert({ type, children }: { type: 'error' | 'success'; children: React.ReactNode }) {
-  return (
-    <div className={`flex items-center gap-2 border px-4 py-3 rounded-xl text-sm font-medium ${
-      type === 'error' ? 'bg-netflix-red/8 border-netflix-red/25 text-red-400' : 'bg-emerald-500/8 border-emerald-500/25 text-emerald-400'
-    }`}>
-      {type === 'error' ? '⚠' : '✓'} {children}
-    </div>
-  );
-}

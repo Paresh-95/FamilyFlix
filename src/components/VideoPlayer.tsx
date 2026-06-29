@@ -11,14 +11,14 @@ function fmt(s: number) {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movieTitle: string; movieId: string; driveFileId?: string }) {
+export default function VideoPlayer({ movieTitle, movieId, onBack }: { movieTitle: string; movieId: string; onBack?: () => void }) {
   const router = useRouter();
+  const handleBack = onBack ?? (() => router.back());
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [playerMode, setPlayerMode] = useState<'drive' | 'browser'>(driveFileId ? 'drive' : 'browser');
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -40,30 +40,30 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    const onPlay = () => setPlaying(true);
+    const onPlay  = () => setPlaying(true);
     const onPause = () => { setPlaying(false); setShowControls(true); };
-    const onTime = () => setCurrentTime(v.currentTime);
-    const onMeta = () => setDuration(v.duration);
-    const onVol = () => { setVolume(v.volume); setMuted(v.muted); };
-    const onErr = () => setError('Could not load video. Check stream route or service account.');
-    const onProg = () => {
+    const onTime  = () => setCurrentTime(v.currentTime);
+    const onMeta  = () => setDuration(v.duration);
+    const onVol   = () => { setVolume(v.volume); setMuted(v.muted); };
+    const onErr   = () => setError('Could not load video.');
+    const onProg  = () => {
       if (v.buffered.length > 0) setBuffered((v.buffered.end(v.buffered.length - 1) / v.duration) * 100);
     };
-    v.addEventListener('play', onPlay);
-    v.addEventListener('pause', onPause);
-    v.addEventListener('timeupdate', onTime);
-    v.addEventListener('loadedmetadata', onMeta);
-    v.addEventListener('volumechange', onVol);
-    v.addEventListener('error', onErr);
-    v.addEventListener('progress', onProg);
+    v.addEventListener('play',            onPlay);
+    v.addEventListener('pause',           onPause);
+    v.addEventListener('timeupdate',      onTime);
+    v.addEventListener('loadedmetadata',  onMeta);
+    v.addEventListener('volumechange',    onVol);
+    v.addEventListener('error',           onErr);
+    v.addEventListener('progress',        onProg);
     return () => {
-      v.removeEventListener('play', onPlay);
-      v.removeEventListener('pause', onPause);
-      v.removeEventListener('timeupdate', onTime);
+      v.removeEventListener('play',           onPlay);
+      v.removeEventListener('pause',          onPause);
+      v.removeEventListener('timeupdate',     onTime);
       v.removeEventListener('loadedmetadata', onMeta);
-      v.removeEventListener('volumechange', onVol);
-      v.removeEventListener('error', onErr);
-      v.removeEventListener('progress', onProg);
+      v.removeEventListener('volumechange',   onVol);
+      v.removeEventListener('error',          onErr);
+      v.removeEventListener('progress',       onProg);
     };
   }, []);
 
@@ -114,10 +114,10 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
   const onKey = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case ' ': case 'k': e.preventDefault(); togglePlay(); break;
-      case 'ArrowLeft': e.preventDefault(); skip(-10); break;
-      case 'ArrowRight': e.preventDefault(); skip(10); break;
-      case 'ArrowUp': e.preventDefault(); if (videoRef.current) videoRef.current.volume = Math.min(1, videoRef.current.volume + 0.1); break;
-      case 'ArrowDown': e.preventDefault(); if (videoRef.current) videoRef.current.volume = Math.max(0, videoRef.current.volume - 0.1); break;
+      case 'ArrowLeft':  e.preventDefault(); skip(-10); break;
+      case 'ArrowRight': e.preventDefault(); skip(10);  break;
+      case 'ArrowUp':    e.preventDefault(); if (videoRef.current) videoRef.current.volume = Math.min(1, videoRef.current.volume + 0.1); break;
+      case 'ArrowDown':  e.preventDefault(); if (videoRef.current) videoRef.current.volume = Math.max(0, videoRef.current.volume - 0.1); break;
       case 'f': e.preventDefault(); toggleFullscreen(); break;
       case 'm': e.preventDefault(); toggleMute(); break;
     }
@@ -125,40 +125,6 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
   };
 
   const progress = duration ? (currentTime / duration) * 100 : 0;
-
-  // Drive iframe player
-  if (playerMode === 'drive' && driveFileId) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: '#000', display: 'flex', flexDirection: 'column' }}>
-        {/* Top bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(0,0,0,0.8)', zIndex: 10 }}>
-          <button onClick={() => router.back()} style={btnStyle}>← Back</button>
-          <span style={{ color: '#fff', fontWeight: 600, fontSize: 15, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movieTitle}</span>
-          {/* Player toggle */}
-          <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 8, padding: 4 }}>
-            <button
-              onClick={() => setPlayerMode('drive')}
-              style={{ ...toggleBtn, background: 'rgba(255,255,255,0.2)', color: '#fff' }}
-            >
-              Drive Player
-            </button>
-            <button
-              onClick={() => setPlayerMode('browser')}
-              style={{ ...toggleBtn, background: 'transparent', color: 'rgba(255,255,255,0.4)' }}
-            >
-              Browser Player
-            </button>
-          </div>
-        </div>
-        <iframe
-          src={`https://drive.google.com/file/d/${driveFileId}/preview`}
-          style={{ flex: 1, border: 'none', width: '100%' }}
-          allow="autoplay; fullscreen"
-          allowFullScreen
-        />
-      </div>
-    );
-  }
 
   return (
     <div
@@ -208,7 +174,6 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
             <button
               onClick={async () => {
                 await navigator.clipboard.writeText(window.location.origin + '/api/stream/' + movieId);
-                alert('Stream URL copied! Paste it into VLC → Open Network Stream');
               }}
               style={{ ...playerBtn, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
             >
@@ -244,9 +209,7 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
           onClick={seek}
           style={{ height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, cursor: 'pointer', marginBottom: 14, position: 'relative' }}
         >
-          {/* Buffered */}
           <div style={{ position: 'absolute', height: '100%', width: `${buffered}%`, background: 'rgba(255,255,255,0.25)', borderRadius: 2 }} />
-          {/* Played */}
           <div style={{ position: 'absolute', height: '100%', width: `${progress}%`, background: '#E50914', borderRadius: 2 }}>
             <div style={{ position: 'absolute', right: -5, top: -4, width: 12, height: 12, borderRadius: '50%', background: '#E50914', boxShadow: '0 0 4px rgba(229,9,20,0.6)' }} />
           </div>
@@ -254,50 +217,28 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
 
         {/* Buttons row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Back */}
-          <button onClick={() => router.back()} style={btnStyle}>← Back</button>
-
+          <button onClick={() => handleBack()} style={btnStyle}>← Back</button>
           <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
-
-          {/* Play/Pause */}
           <button onClick={togglePlay} style={{ ...iconBtn, fontSize: 18 }}>{playing ? '⏸' : '▶'}</button>
-
-          {/* Skip */}
           <button onClick={() => skip(-10)} style={iconBtn} title="-10s">⏮ 10</button>
-          <button onClick={() => skip(10)} style={iconBtn} title="+10s">10 ⏭</button>
-
-          {/* Time */}
+          <button onClick={() => skip(10)}  style={iconBtn} title="+10s">10 ⏭</button>
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, minWidth: 90 }}>
             {fmt(currentTime)} / {fmt(duration)}
           </span>
-
-          {/* Title */}
           <span style={{ flex: 1, color: '#fff', fontWeight: 600, fontSize: 14, opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {movieTitle}
           </span>
-
-          {/* Volume */}
           <button onClick={toggleMute} style={iconBtn}>{muted || volume === 0 ? '🔇' : volume < 0.5 ? '🔉' : '🔊'}</button>
           <input
             type="range" min="0" max="1" step="0.05" value={muted ? 0 : volume}
             onChange={changeVolume}
             style={{ width: 70, accentColor: '#E50914', cursor: 'pointer' }}
           />
-
-          {/* Player toggle */}
-          {driveFileId && (
-            <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 8, padding: 3, marginLeft: 4 }}>
-              <button onClick={() => setPlayerMode('drive')} style={{ ...toggleBtn, color: 'rgba(255,255,255,0.5)' }}>Drive</button>
-              <button style={{ ...toggleBtn, background: 'rgba(255,255,255,0.2)', color: '#fff' }}>Browser</button>
-            </div>
-          )}
-
-          {/* Fullscreen */}
-          <button onClick={toggleFullscreen} style={iconBtn}>{fullscreen ? '⛶' : '⛶'}</button>
+          <button onClick={toggleFullscreen} style={iconBtn}>{fullscreen ? '⊡' : '⛶'}</button>
         </div>
       </div>
 
-      {/* Top back bar (always visible briefly) */}
+      {/* Top bar */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
         background: 'linear-gradient(rgba(0,0,0,0.7), transparent)',
@@ -307,7 +248,7 @@ export default function VideoPlayer({ movieTitle, movieId, driveFileId }: { movi
         transition: 'transform 0.25s ease',
         pointerEvents: showControls ? 'auto' : 'none',
       }}>
-        <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>
+        <button onClick={() => handleBack()} style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>
           ← Back
         </button>
         <span style={{ color: '#fff', fontWeight: 600, fontSize: 15, opacity: 0.85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -338,18 +279,6 @@ const iconBtn: React.CSSProperties = {
   fontSize: 16,
   borderRadius: 6,
   opacity: 0.85,
-};
-
-const toggleBtn: React.CSSProperties = {
-  background: 'transparent',
-  border: 'none',
-  color: '#fff',
-  cursor: 'pointer',
-  padding: '4px 10px',
-  borderRadius: 6,
-  fontSize: 12,
-  fontWeight: 600,
-  transition: 'all 0.15s',
 };
 
 const playerBtn: React.CSSProperties = {

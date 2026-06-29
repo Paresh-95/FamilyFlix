@@ -59,7 +59,7 @@ export default function Hero({ movie }: { movie: Movie }) {
         {/* CTA buttons */}
         <div className="flex gap-4">
           <Link
-            href={`/watch/${movie.id}`}
+            href={`/movie/${movie.id}`}
             data-hero-focus
             className="flex items-center gap-3 bg-white text-black font-bold text-lg px-8 py-4 rounded-xl hover:bg-white/90 active:scale-95 transition-all focus-visible:ring-4 focus-visible:ring-white shadow-lg shadow-black/30"
           >

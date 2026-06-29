@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MonitorPlay, Tv2, Copy, Check, ChevronDown } from 'lucide-react';
+import { Copy, Check, ChevronDown, MonitorPlay } from 'lucide-react';
+import { IINAIcon, VLCIcon } from './PlayerIcons';
 
 export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
   const [open,   setOpen]   = useState(false);
@@ -55,8 +56,8 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
           style={{ background: '#0e0e0e' }}>
           <button onClick={openIINA}
             className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 transition-colors text-left border-b border-white/5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
-              <MonitorPlay size={15} className="text-indigo-400" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+              <IINAIcon size={32} />
             </div>
             <div>
               <p className="text-white text-sm font-semibold">Open in IINA</p>
@@ -65,12 +66,12 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
           </button>
           <button onClick={openVLC}
             className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 transition-colors text-left border-b border-white/5">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center shrink-0">
-              <Tv2 size={15} className="text-orange-400" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+              <VLCIcon size={32} />
             </div>
             <div>
               <p className="text-white text-sm font-semibold">Open in VLC</p>
-              <p className="text-white/30 text-xs">Requires VLC protocol setup</p>
+              <p className="text-white/30 text-xs">Cross-platform</p>
             </div>
           </button>
           <button onClick={copyUrl}

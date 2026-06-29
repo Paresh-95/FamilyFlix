@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, Eye, EyeOff, X } from 'lucide-react';
 
-export default function AdminPinModal({ onClose }: { onClose: () => void }) {
+export default function AdminPinModal({ onClose, redirectTo = '/admin' }: { onClose: () => void; redirectTo?: string }) {
   const [pin,     setPin]     = useState('');
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function AdminPinModal({ onClose }: { onClose: () => void }) {
     });
     if (res.ok) {
       onClose();
-      router.push('/admin');
+      router.push(redirectTo);
     } else {
       setError('Wrong PIN. Try again.');
       setPin('');
