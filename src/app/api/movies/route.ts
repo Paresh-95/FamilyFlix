@@ -13,8 +13,14 @@ export async function GET() {
   return NextResponse.json(data);
 }
 
+function extractDriveId(input: string): string {
+  const m = input.match(/\/(?:file\/d|folders)\/([a-zA-Z0-9_-]{10,})/);
+  return m ? m[1] : input.trim();
+}
+
 export async function POST(req: NextRequest) {
-  const { driveFileId, movieName, tmdbId } = await req.json();
+  const { driveFileId: rawDriveFileId, movieName, tmdbId } = await req.json();
+  const driveFileId = extractDriveId(rawDriveFileId ?? '');
 
   if (!driveFileId) {
     return NextResponse.json({ error: 'driveFileId is required' }, { status: 400 });
@@ -51,15 +57,14 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient();
 
-  // Prevent duplicates by drive_file_id
-  const { data: existing } = await supabase
-    .from('movies')
-    .select('id, title')
-    .eq('drive_file_id', driveFileId)
-    .single();
+  // Prevent duplicates — check both bare ID and any stored URL form, plus TMDB ID
+  const { data: allMovies } = await supabase.from('movies').select('id, title, drive_file_id, tmdb_id');
+  const duplicate = (allMovies ?? []).find((m: { drive_file_id: string; tmdb_id: number }) =>
+    extractDriveId(m.drive_file_id) === driveFileId || m.tmdb_id === movieData.tmdb_id
+  );
 
-  if (existing) {
-    return NextResponse.json({ error: `Already in library: "${existing.title}"` }, { status: 409 });
+  if (duplicate) {
+    return NextResponse.json({ error: `Already in library: "${(duplicate as { title: string }).title}"` }, { status: 409 });
   }
 
   const { data, error } = await supabase

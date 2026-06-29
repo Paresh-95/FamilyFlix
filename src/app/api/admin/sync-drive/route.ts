@@ -54,17 +54,26 @@ export async function GET() {
 
     const driveFiles = res.data.files ?? [];
 
-    // Get already-added drive_file_ids
+    // Get all existing movies — check by drive_file_id (normalized) AND tmdb_id
     const supabase = createServerClient();
-    const { data: existing } = await supabase.from('movies').select('drive_file_id');
-    const existingIds = new Set((existing ?? []).map((m: { drive_file_id: string }) => m.drive_file_id));
+    const { data: existing } = await supabase.from('movies').select('drive_file_id, tmdb_id');
 
-    const newFiles = driveFiles.filter((f) => !existingIds.has(f.id!));
+    const existingDriveIds = new Set(
+      (existing ?? []).map(({ drive_file_id }: { drive_file_id: string }) => {
+        const m = drive_file_id?.match(/\/(?:file\/d|folders)\/([a-zA-Z0-9_-]{10,})/);
+        return m ? m[1] : drive_file_id;
+      })
+    );
+    const existingTmdbIds = new Set(
+      (existing ?? []).map(({ tmdb_id }: { tmdb_id: number }) => tmdb_id).filter(Boolean)
+    );
+
+    const newFiles = driveFiles.filter((f) => !existingDriveIds.has(f.id!));
 
     if (newFiles.length === 0) return NextResponse.json([]);
 
-    // Search TMDB for each new file in parallel
-    const candidates = await Promise.all(
+    // Search TMDB for each new file in parallel, then filter out already-known TMDB IDs
+    const allCandidates = await Promise.all(
       newFiles.map(async (file) => {
         const cleanedName = cleanFilename(file.name!);
         try {
@@ -85,6 +94,11 @@ export async function GET() {
           return { driveFileId: file.id!, filename: file.name!, cleanedName, tmdbMatches: [] };
         }
       })
+    );
+
+    // Drop candidates whose top TMDB match is already in the library
+    const candidates = allCandidates.filter(
+      (c) => c.tmdbMatches.length === 0 || !existingTmdbIds.has(c.tmdbMatches[0].id)
     );
 
     return NextResponse.json(candidates);
