@@ -141,7 +141,7 @@ export default function VideoPlayer({ movieTitle, movieId, onBack }: { movieTitl
     >
       <video
         ref={videoRef}
-        src={`/api/stream/${movieId}`}
+        src={`/api/drive-url/${movieId}`}
         style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }}
         autoPlay
         playsInline
@@ -160,20 +160,20 @@ export default function VideoPlayer({ movieTitle, movieId, onBack }: { movieTitl
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 260 }}>
             <a
-              href={`iina://weblink?url=${encodeURIComponent(window.location.origin + '/api/stream/' + movieId)}`}
+              href={`iina://weblink?url=${encodeURIComponent(window.location.origin + '/api/drive-url/' + movieId)}`}
               style={{ ...playerBtn, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.4)', color: '#a5b4fc' }}
             >
               🎬 Open in IINA <span style={{ fontSize: 11, opacity: 0.6 }}>(macOS)</span>
             </a>
             <a
-              href={`vlc://${window.location.origin}/api/stream/${movieId}`}
+              href={`vlc://${window.location.origin.replace(/^https?:\/\//, '')}/api/drive-url/${movieId}`}
               style={{ ...playerBtn, background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.4)', color: '#fdba74' }}
             >
               🔶 Open in VLC
             </a>
             <button
               onClick={async () => {
-                await navigator.clipboard.writeText(window.location.origin + '/api/stream/' + movieId);
+                await navigator.clipboard.writeText(window.location.origin + '/api/drive-url/' + movieId);
               }}
               style={{ ...playerBtn, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
             >
