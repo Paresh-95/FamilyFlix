@@ -79,19 +79,21 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
-  const streamUrl = typeof window !== 'undefined'
+  const driveUrlBase = typeof window !== 'undefined'
     ? `${window.location.origin}/api/drive-url/${movieId}`
     : '';
 
   function openIINA() {
     const a = document.createElement('a');
-    a.href = `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+    a.href = `iina://weblink?url=${encodeURIComponent(driveUrlBase)}`;
     a.click();
     setOpen(false);
   }
 
-  function downloadM3U() {
-    const m3u = `#EXTM3U\n#EXTINF:-1,Stream\n${streamUrl}`;
+  async function downloadM3U() {
+    const res = await fetch(`/api/drive-link/${movieId}`);
+    const directUrl = res.ok ? await res.text() : driveUrlBase;
+    const m3u = `#EXTM3U\n#EXTINF:-1,Stream\n${directUrl}`;
     const blob = new Blob([m3u], { type: 'audio/x-mpegurl' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -102,7 +104,7 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
   }
 
   async function copyUrl() {
-    await navigator.clipboard.writeText(streamUrl);
+    await navigator.clipboard.writeText(driveUrlBase);
     setCopied(true);
     setOpen(false);
     setTimeout(() => setCopied(false), 2000);
