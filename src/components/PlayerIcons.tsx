@@ -24,6 +24,20 @@ export function IINAIcon({ size = 44 }: { size?: number }) {
   );
 }
 
+export function VSCodeIcon({ size = 44 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <mask id="vsc-mask">
+        <path fill="white" d="M70.9 3.8L38.4 33.6 15.6 16.4 5 22.2v55.6l10.6 5.8 23-17.2 32.3 29.8L95 88.2V11.8L70.9 3.8zm.1 66.6L45.5 50l25.5-20.4v40.8z"/>
+      </mask>
+      <rect width="100" height="100" rx="15" fill="#0065A9"/>
+      <path fill="#007ACC" d="M95 11.8L70.9 3.8 38.4 33.6 15.6 16.4 5 22.2l23.4 27.8L5 77.8l10.6 5.8 23-17.2 32.3 29.8L95 88.2V11.8z"/>
+      <path fill="#1F9CF0" d="M70.9 3.8L38.4 33.6 15.6 16.4 5 22.2l23.4 27.8L5 77.8l10.6 5.8 23-17.2 32.3 29.8L95 88.2V11.8L70.9 3.8zm0 66.6L45.5 50l25.4-20.4v40.8z" mask="url(#vsc-mask)" opacity=".25"/>
+      <path fill="white" d="M70.9 70.4L45.5 50l25.4-20.4v40.8z" mask="url(#vsc-mask)"/>
+    </svg>
+  );
+}
+
 export function VLCIcon({ size = 44 }: { size?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element

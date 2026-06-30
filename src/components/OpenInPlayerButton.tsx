@@ -22,12 +22,16 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
     : '';
 
   function openIINA() {
-    window.location.href = `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+    const a = document.createElement('a');
+    a.href = `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+    a.click();
     setOpen(false);
   }
 
   function openVLC() {
-    window.location.href = `vlc://${streamUrl.replace(/^https?:\/\//, '')}`;
+    const a = document.createElement('a');
+    a.href = `vlc://${streamUrl.replace(/^https?:\/\//, '')}`;
+    a.click();
     setOpen(false);
   }
 
