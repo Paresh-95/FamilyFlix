@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_PATHS  = ['/login', '/api/auth', '/api/stream', '/api/drive-url', '/api/drive-link'];
+const PUBLIC_PATHS  = ['/login', '/api/auth', '/api/stream'];
 const ADMIN_PUBLIC  = ['/api/admin-auth'];
 
 export function middleware(req: NextRequest) {
