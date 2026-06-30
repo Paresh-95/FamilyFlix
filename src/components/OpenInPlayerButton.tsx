@@ -22,12 +22,21 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
     : '';
 
   function openIINA() {
-    window.location.href = `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+    const a = document.createElement('a');
+    a.href = `iina://weblink?url=${encodeURIComponent(streamUrl)}`;
+    a.click();
     setOpen(false);
   }
 
   function openVLC() {
-    window.location.href = `vlc://${streamUrl.replace(/^https?:\/\//, '')}`;
+    const m3u = `#EXTM3U\n#EXTINF:-1,Stream\n${streamUrl}`;
+    const blob = new Blob([m3u], { type: 'audio/x-mpegurl' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'stream.m3u';
+    a.click();
+    URL.revokeObjectURL(url);
     setOpen(false);
   }
 
