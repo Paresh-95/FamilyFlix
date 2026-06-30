@@ -29,9 +29,14 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
   }
 
   function openVLC() {
+    const m3u = `#EXTM3U\n#EXTINF:-1,Stream\n${streamUrl}`;
+    const blob = new Blob([m3u], { type: 'audio/x-mpegurl' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = `vlc://${streamUrl.replace(/^https?:\/\//, '')}`;
+    a.href = url;
+    a.download = 'stream.m3u';
     a.click();
+    URL.revokeObjectURL(url);
     setOpen(false);
   }
 
