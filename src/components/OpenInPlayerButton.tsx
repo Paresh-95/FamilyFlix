@@ -27,7 +27,7 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
   }
 
   function openVLC() {
-    window.location.href = `vlc://${streamUrl}`;
+    window.location.href = `vlc://${streamUrl.replace(/^https?:\/\//, '')}`;
     setOpen(false);
   }
 
