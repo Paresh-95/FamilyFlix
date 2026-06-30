@@ -66,8 +66,8 @@ function VLCInstructionsModal({ onClose, onDownload }: { onClose: () => void; on
 }
 
 export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
-  const [open,       setOpen]       = useState(false);
-  const [copied,     setCopied]     = useState(false);
+  const [open,   setOpen]   = useState(false);
+  const [copied, setCopied] = useState(false);
   const [showVLCModal, setShowVLCModal] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -80,7 +80,7 @@ export default function OpenInPlayerButton({ movieId }: { movieId: string }) {
   }, []);
 
   const streamUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/api/stream/${movieId}`
+    ? `${window.location.origin}/api/drive-url/${movieId}`
     : '';
 
   function openIINA() {
