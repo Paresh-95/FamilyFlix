@@ -56,7 +56,7 @@ jobs:
           # Folder in Drive to scan for .zip files
           DRIVE_DOWNLOADS: "gdrive:Downloads"
           # Folder in Drive where extracted folders are uploaded
-          DRIVE_MOVIES: "gdrive:Movies"
+          DRIVE_MOVIES: "gdrive:MOVIES"
           # Folder in Drive where processed zips are moved (set to "" to delete instead)
           DRIVE_PROCESSED: "gdrive:Downloads/Processed"
           # Maximum size (bytes) of a single zip we'll attempt — 6 GB.
