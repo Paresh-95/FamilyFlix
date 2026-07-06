@@ -25,6 +25,46 @@ export async function searchMovie(title: string) {
   };
 }
 
+export async function searchTV(title: string) {
+  const data = await tmdbFetch('/search/tv', { query: title });
+  return (data.results ?? []).slice(0, 5).map((s: Record<string, unknown>) => ({
+    id: s.id as number,
+    name: s.name as string,
+    year: s.first_air_date ? String(s.first_air_date).slice(0, 4) : undefined,
+    poster_path: s.poster_path as string | null,
+  }));
+}
+
+export async function getTVDetails(tmdbId: number) {
+  const details = await tmdbFetch(`/tv/${tmdbId}`);
+  return {
+    title: details.name as string,
+    overview: details.overview as string | null,
+    poster_path: details.poster_path as string | null,
+    backdrop_path: details.backdrop_path as string | null,
+    first_air_year: details.first_air_date ? parseInt(details.first_air_date.slice(0, 4)) : null,
+    rating: details.vote_average ? Math.round(details.vote_average * 10) / 10 : null,
+    genres: (details.genres as { name: string }[]).map((g) => g.name),
+    number_of_seasons: details.number_of_seasons as number,
+  };
+}
+
+export async function getTVSeason(tmdbId: number, seasonNumber: number) {
+  try {
+    const data = await tmdbFetch(`/tv/${tmdbId}/season/${seasonNumber}`);
+    return (data.episodes ?? []).map((ep: Record<string, unknown>) => ({
+      episode_number: ep.episode_number as number,
+      season_number: ep.season_number as number,
+      title: ep.name as string,
+      overview: ep.overview as string | null,
+      still_path: ep.still_path as string | null,
+      air_date: ep.air_date as string | null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getMovieDetails(tmdbId: number) {
   const [details, credits] = await Promise.all([
     tmdbFetch(`/movie/${tmdbId}`),
