@@ -1,9 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Movie, Series } from '@/lib/supabase';
-import CategoryRow from '@/components/CategoryRow';
-import SeriesRow from '@/components/SeriesRow';
 import MovieCard from '@/components/MovieCard';
 import SeriesCard from '@/components/SeriesCard';
 
@@ -16,6 +14,23 @@ export default function HomeContent({
   series: Series[];
   query?: string;
 }) {
+  const [activeFilter, setActiveFilter] = useState<string>('All');
+
+  const genres = useMemo(() => {
+    const set = new Set<string>();
+    for (const movie of movies) {
+      if (movie.genres?.[0]) set.add(movie.genres[0]);
+    }
+    return Array.from(set).sort();
+  }, [movies]);
+
+  const filters = useMemo(() => {
+    const list = ['All'];
+    if (series.length > 0) list.push('Series');
+    list.push(...genres);
+    return list;
+  }, [genres, series]);
+
   const filteredMovies = useMemo(() => {
     if (!query) return movies;
     const q = query.toLowerCase();
@@ -28,18 +43,7 @@ export default function HomeContent({
     return series.filter((s) => s.title.toLowerCase().includes(q));
   }, [series, query]);
 
-  const byGenre = useMemo(() => {
-    const map = new Map<string, Movie[]>();
-    for (const movie of movies) {
-      const genre = movie.genres?.[0];
-      if (genre) {
-        if (!map.has(genre)) map.set(genre, []);
-        map.get(genre)!.push(movie);
-      }
-    }
-    return map;
-  }, [movies]);
-
+  // Search results view
   if (query) {
     const total = filteredMovies.length + filteredSeries.length;
     return (
@@ -78,16 +82,51 @@ export default function HomeContent({
     );
   }
 
-  const genres = Array.from(byGenre.entries()) as [string, Movie[]][];
+  // Filtered content
+  const showSeries  = activeFilter === 'All' || activeFilter === 'Series';
+  const showMovies  = activeFilter === 'All' || (activeFilter !== 'Series' && activeFilter !== 'All');
+  const visibleMovies = activeFilter === 'All'
+    ? movies
+    : activeFilter === 'Series'
+    ? []
+    : movies.filter((m) => m.genres?.[0] === activeFilter);
+  const visibleSeries = showSeries ? series : [];
+
+  const total = visibleMovies.length + visibleSeries.length;
 
   return (
     <div className="pb-20">
-      {series.length > 0 && <SeriesRow title="Web Series" seriesList={series} rowIndex={0} />}
-      {genres.map(([genre, genreMovies], i) => (
-        <CategoryRow key={genre} title={genre} movies={genreMovies} rowIndex={series.length > 0 ? i + 1 : i} />
-      ))}
-      {movies.length > 0 && (
-        <CategoryRow title="All Movies" movies={movies} rowIndex={series.length > 0 ? genres.length + 1 : genres.length} />
+      {/* Filter chips */}
+      <div className="px-6 md:px-10 pt-6 pb-4">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          {filters.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+                activeFilter === filter
+                  ? 'bg-white text-black'
+                  : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Grid */}
+      {total === 0 ? (
+        <div className="text-center py-24">
+          <p className="text-white/30 text-lg">Nothing in this category yet.</p>
+        </div>
+      ) : (
+        <div className="px-6 md:px-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {visibleSeries.map((s) => <SeriesCard key={s.id} series={s} />)}
+            {visibleMovies.map((m) => <MovieCard key={m.id} movie={m} />)}
+          </div>
+        </div>
       )}
     </div>
   );
