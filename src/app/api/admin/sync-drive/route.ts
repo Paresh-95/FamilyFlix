@@ -43,14 +43,27 @@ export async function GET() {
     });
     const driveFiles = filesRes.data.files ?? [];
 
-    // ── Scan subfolders (series) ───────────────────────────────────────────
+    // ── Scan subfolders (series) — only folders that contain video files ───
     const foldersRes = await drive.files.list({
       q: `${parentQ} mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
       fields: 'files(id, name)',
       pageSize: 200,
       orderBy: 'name',
     });
-    const driveFolders = foldersRes.data.files ?? [];
+    const allFolders = foldersRes.data.files ?? [];
+
+    // Filter to only folders that actually contain at least one video file
+    const folderChecks = await Promise.all(
+      allFolders.map(async (folder) => {
+        const check = await drive.files.list({
+          q: `'${folder.id}' in parents and mimeType contains 'video/' and trashed = false`,
+          fields: 'files(id)',
+          pageSize: 1,
+        });
+        return (check.data.files?.length ?? 0) > 0 ? folder : null;
+      })
+    );
+    const driveFolders = folderChecks.filter(Boolean) as typeof allFolders;
 
     // ── Existing library ───────────────────────────────────────────────────
     const [{ data: existingMovies }, { data: existingSeries }] = await Promise.all([
