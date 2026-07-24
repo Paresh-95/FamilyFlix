@@ -87,6 +87,7 @@ export default function Navbar() {
         {/* Nav links */}
         <div className="hidden sm:flex items-center gap-0.5">
           <NavLink href="/" active={pathname === '/'}>Home</NavLink>
+          <NavLink href="/series" active={pathname === '/series'}>Series</NavLink>
           <NavLink href="/photos" active={pathname.startsWith('/photos')}>Photos</NavLink>
           {/* Admin link — shows modal if not already in admin */}
           <Link
