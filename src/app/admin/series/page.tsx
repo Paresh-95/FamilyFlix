@@ -55,7 +55,7 @@ export default function SeriesTablePage() {
                 <p className="text-white/30 text-sm mt-0.5">{seriesList.length} series in your library</p>
               </div>
             </div>
-            <Link href="/admin?tab=series" className="ml-auto flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all">
+            <Link href="/admin/add-series" className="ml-auto flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all">
               <Plus size={15} />Add Series
             </Link>
           </div>
@@ -88,7 +88,7 @@ export default function SeriesTablePage() {
             </div>
             <div className="text-center">
               <p className="text-white/50 font-semibold">{search ? 'No results match your search.' : 'No series yet.'}</p>
-              {!search && <Link href="/admin" className="text-teal-400 hover:text-teal-300 text-sm mt-2 inline-block transition-colors">Add your first series →</Link>}
+              {!search && <Link href="/admin/add-series" className="text-teal-400 hover:text-teal-300 text-sm mt-2 inline-block transition-colors">Add your first series →</Link>}
             </div>
           </div>
         )}

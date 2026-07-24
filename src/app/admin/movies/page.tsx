@@ -57,7 +57,7 @@ export default function MoviesTablePage() {
                 <p className="text-white/30 text-sm mt-0.5">{movies.length} movie{movies.length !== 1 ? 's' : ''} in your library</p>
               </div>
             </div>
-            <Link href="/admin" className="ml-auto flex items-center gap-2 bg-netflix-red hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all">
+            <Link href="/admin/add-movie" className="ml-auto flex items-center gap-2 bg-netflix-red hover:bg-red-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all">
               <Plus size={15} />Add Movie
             </Link>
           </div>
