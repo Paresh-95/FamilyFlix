@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { TMDB_IMAGE_BASE } from '@/lib/tmdb';
 import Navbar from '@/components/Navbar';
 import OpenInPlayerButton from '@/components/OpenInPlayerButton';
@@ -23,6 +24,23 @@ type Cast = { name: string; character: string; profile_path: string | null };
 
 export default function MovieDetailClient({ movie, cast }: { movie: Movie; cast: Cast[] }) {
   const [drivePlayer, setDrivePlayer] = useState(false);
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const router = useRouter();
+
+  const startWatchParty = async () => {
+    setCreatingRoom(true);
+    try {
+      const res = await fetch('/api/watch-rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ movieId: movie.id }),
+      });
+      const { roomId } = await res.json();
+      router.push(`/watch/${roomId}`);
+    } finally {
+      setCreatingRoom(false);
+    }
+  };
 
   const backdrop = movie.backdrop_path ? `${TMDB_IMAGE_BASE}/original${movie.backdrop_path}` : null;
   const poster   = movie.poster_path   ? `${TMDB_IMAGE_BASE}/original${movie.poster_path}`  : null;
@@ -116,6 +134,13 @@ export default function MovieDetailClient({ movie, cast }: { movie: Movie; cast:
                 <span className="text-xl">▶</span> Play Now
               </button>
               <OpenInPlayerButton movieId={movie.id} />
+              <button
+                onClick={startWatchParty}
+                disabled={creatingRoom}
+                className="flex items-center gap-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-bold text-lg px-8 py-4 rounded-xl active:scale-95 transition-all"
+              >
+                {creatingRoom ? '⏳ Creating…' : '🎉 Watch Party'}
+              </button>
               <Link
                 href="/"
                 className="flex items-center gap-3 bg-white/10 backdrop-blur-sm text-white font-bold text-lg px-8 py-4 rounded-xl hover:bg-white/20 active:scale-95 transition-all border border-white/15"

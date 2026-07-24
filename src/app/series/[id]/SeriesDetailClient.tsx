@@ -3,12 +3,30 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { TMDB_IMAGE_BASE } from '@/lib/tmdb';
 import { Series, Episode } from '@/lib/supabase';
 
 export default function SeriesDetailClient({ series, episodes }: { series: Series; episodes: Episode[] }) {
   const [playingEpisode, setPlayingEpisode] = useState<Episode | null>(null);
   const [selectedSeason, setSelectedSeason] = useState(1);
+  const [creatingRoom, setCreatingRoom] = useState<string | null>(null);
+  const router = useRouter();
+
+  const startWatchParty = async (ep: Episode) => {
+    setCreatingRoom(ep.id);
+    try {
+      const res = await fetch('/api/watch-rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ episodeId: ep.id }),
+      });
+      const { roomId } = await res.json();
+      router.push(`/watch/${roomId}`);
+    } finally {
+      setCreatingRoom(null);
+    }
+  };
 
   const seasons = useMemo(() => {
     const set = new Set(episodes.map((e) => e.season_number));
@@ -191,6 +209,13 @@ export default function SeriesDetailClient({ series, episodes }: { series: Serie
                     {ep.overview && (
                       <p className="text-white/40 text-xs md:text-sm leading-relaxed line-clamp-2">{ep.overview}</p>
                     )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); startWatchParty(ep); }}
+                      disabled={creatingRoom === ep.id}
+                      className="mt-2 text-xs bg-purple-600/80 hover:bg-purple-600 disabled:opacity-50 text-white font-semibold px-3 py-1 rounded-lg transition-colors"
+                    >
+                      {creatingRoom === ep.id ? '⏳…' : '🎉 Watch Party'}
+                    </button>
                   </div>
                 </button>
               ))}
