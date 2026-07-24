@@ -74,10 +74,15 @@ export async function GET() {
       (existingSeries ?? []).map(({ tmdb_id }: { tmdb_id: number }) => tmdb_id).filter(Boolean)
     );
 
+    // ── Separate episode files from movie files ────────────────────────────
+    const EPISODE_RE = /S\d{1,2}E\d{1,2}|\bE\d{2,3}\b|\d{1,2}x\d{2}/i;
+    const newFiles   = driveFiles.filter((f) => !existingMovieIds.has(f.id!));
+    const movieFiles   = newFiles.filter((f) => !EPISODE_RE.test(f.name!));
+    const episodeFiles = newFiles.filter((f) =>  EPISODE_RE.test(f.name!));
+
     // ── Match movies on TMDB ───────────────────────────────────────────────
-    const newFiles = driveFiles.filter((f) => !existingMovieIds.has(f.id!));
     const movieCandidates = await Promise.all(
-      newFiles.map(async (file) => {
+      movieFiles.map(async (file) => {
         const cleanedName = cleanFilename(file.name!);
         try {
           const r = await fetch(
@@ -90,6 +95,35 @@ export async function GET() {
           return { type: 'movie' as const, driveId: file.id!, filename: file.name!, cleanedName, tmdbMatches };
         } catch {
           return { type: 'movie' as const, driveId: file.id!, filename: file.name!, cleanedName, tmdbMatches: [] };
+        }
+      })
+    );
+
+    // ── Group episode files by series name → one candidate per series ──────
+    const episodeGroups = new Map<string, { driveId: string; filename: string }>();
+    for (const f of episodeFiles) {
+      const cleanedName = cleanFilename(f.name!);
+      if (!episodeGroups.has(cleanedName)) {
+        episodeGroups.set(cleanedName, { driveId: f.id!, filename: f.name! });
+      }
+    }
+
+    const episodeCandidates = await Promise.all(
+      Array.from(episodeGroups.entries()).map(async ([cleanedName, { driveId, filename }]) => {
+        if (existingSeriesTmdbIds.size > 0) {
+          // skip if already in library by name match later
+        }
+        try {
+          const r = await fetch(
+            `https://api.themoviedb.org/3/search/tv?api_key=${process.env.TMDB_API_KEY}&query=${encodeURIComponent(cleanedName)}&page=1`
+          );
+          const data = await r.json();
+          const tmdbMatches: TmdbMatch[] = (data.results ?? []).slice(0, 4).map((m: {
+            id: number; name: string; first_air_date?: string; poster_path?: string;
+          }) => ({ id: m.id, title: m.name, year: m.first_air_date?.slice(0, 4), poster_path: m.poster_path ?? undefined }));
+          return { type: 'series' as const, driveId, filename, cleanedName, tmdbMatches, episodeFiles: true };
+        } catch {
+          return { type: 'series' as const, driveId, filename, cleanedName, tmdbMatches: [], episodeFiles: true };
         }
       })
     );
@@ -115,10 +149,11 @@ export async function GET() {
     );
 
     // Filter out already-known TMDB IDs
-    const filteredMovies  = movieCandidates.filter((c) => c.tmdbMatches.length === 0 || !existingMovieTmdbIds.has(c.tmdbMatches[0].id));
-    const filteredSeries  = seriesCandidates.filter((c) => c.tmdbMatches.length === 0 || !existingSeriesTmdbIds.has(c.tmdbMatches[0].id));
+    const filteredMovies        = movieCandidates.filter((c) => c.tmdbMatches.length === 0 || !existingMovieTmdbIds.has(c.tmdbMatches[0].id));
+    const filteredSeries        = seriesCandidates.filter((c) => c.tmdbMatches.length === 0 || !existingSeriesTmdbIds.has(c.tmdbMatches[0].id));
+    const filteredEpisodeSeries = episodeCandidates.filter((c) => c.tmdbMatches.length === 0 || !existingSeriesTmdbIds.has(c.tmdbMatches[0].id));
 
-    return NextResponse.json([...filteredMovies, ...filteredSeries]);
+    return NextResponse.json([...filteredMovies, ...filteredSeries, ...filteredEpisodeSeries]);
   } catch (err) {
     console.error('Sync Drive error:', err);
     return NextResponse.json({ error: 'Failed to scan Drive' }, { status: 500 });

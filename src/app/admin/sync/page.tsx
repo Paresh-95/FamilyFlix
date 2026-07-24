@@ -15,6 +15,7 @@ type Candidate = {
   filename: string;
   cleanedName: string;
   tmdbMatches: TmdbMatch[];
+  episodeFiles?: boolean;
 };
 
 type AddedItem = { filename: string; title: string; poster_path?: string; type: 'movie' | 'series' };
@@ -230,6 +231,11 @@ export default function SyncDrivePage() {
                         </span>
                         <p className="text-white/25 text-xs font-mono truncate">{row.candidate.filename}</p>
                       </div>
+                      {row.candidate.episodeFiles && (
+                        <p className="text-amber-400/70 text-xs mt-1 flex items-center gap-1">
+                          <AlertTriangle size={11} />Episode files detected — move them into a subfolder in Drive, then sync again to add as series
+                        </p>
+                      )}
                       {row.status === 'error' && (
                         <p className="text-netflix-red text-xs mt-1 flex items-center gap-1"><AlertTriangle size={11} />Failed to add — try again</p>
                       )}
