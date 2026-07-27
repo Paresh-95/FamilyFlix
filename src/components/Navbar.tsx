@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Search, X, LogOut, ShieldOff, RefreshCw } from 'lucide-react';
+import { Search, X, LogOut, ShieldOff, RefreshCw, Menu } from 'lucide-react';
 import AdminPinModal from './AdminPinModal';
 
 export default function Navbar() {
@@ -12,6 +12,7 @@ export default function Navbar() {
   const [scrolled,         setScrolled]         = useState(false);
   const [adminModal,       setAdminModal]       = useState(false);
   const [adminRedirectTo,  setAdminRedirectTo]  = useState('/admin');
+  const [menuOpen,         setMenuOpen]         = useState(false);
   const router   = useRouter();
   const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -70,26 +71,27 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center gap-2 px-6 py-3 transition-all duration-300"
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
-          background: scrolled
+          background: scrolled || menuOpen
             ? 'rgba(10,10,10,0.97)'
             : 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%)',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : 'none',
+          backdropFilter: scrolled || menuOpen ? 'blur(12px)' : 'none',
+          borderBottom: scrolled || menuOpen ? '1px solid rgba(255,255,255,0.05)' : 'none',
         }}
       >
+        {/* Main bar */}
+        <div className="flex items-center gap-2 px-6 py-3">
         {/* Logo */}
-        <Link href="/" className="logo-text font-extrabold text-xl tracking-tight shrink-0 mr-2">
+        <Link href="/" onClick={() => setMenuOpen(false)} className="logo-text font-extrabold text-xl tracking-tight shrink-0 mr-2">
           FamilyFlix
         </Link>
 
-        {/* Nav links */}
+        {/* Nav links — desktop */}
         <div className="hidden sm:flex items-center gap-0.5">
           <NavLink href="/" active={pathname === '/'}>Home</NavLink>
           <NavLink href="/series" active={pathname === '/series'}>Series</NavLink>
           <NavLink href="/photos" active={pathname.startsWith('/photos')}>Photos</NavLink>
-          {/* Admin link — shows modal if not already in admin */}
           <Link
             href="/admin"
             onClick={handleAdminClick}
@@ -167,6 +169,51 @@ export default function Navbar() {
         >
           <LogOut size={16} />
         </button>
+
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={() => setMenuOpen((o) => !o)}
+          className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl text-white/50 hover:text-white hover:bg-white/8 transition-colors"
+        >
+          {menuOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+        </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="sm:hidden border-t border-white/8 px-4 py-3 flex flex-col gap-1">
+            {[
+              { href: '/',       label: 'Home',   active: pathname === '/' },
+              { href: '/series', label: 'Series', active: pathname === '/series' },
+              { href: '/photos', label: 'Photos', active: pathname.startsWith('/photos') },
+            ].map(({ href, label, active }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
+                  active
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/60 hover:text-white hover:bg-white/6'
+                }`}
+              >
+                {label}
+                {active && <span className="ml-2 text-netflix-red">·</span>}
+              </Link>
+            ))}
+            <Link
+              href="/admin"
+              onClick={(e) => { setMenuOpen(false); handleAdminClick(e); }}
+              className={`px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
+                pathname.startsWith('/admin')
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/60 hover:text-white hover:bg-white/6'
+              }`}
+            >
+              Admin
+            </Link>
+          </div>
+        )}
       </nav>
 
       <Suspense fallback={null}>
